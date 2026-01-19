@@ -1,0 +1,184 @@
+-- SWILL SCRIPT: PHONE FLIGHT FOR EXECUTOR DELTA (ROBLOX)  
+-- BASED ON FLY GUI V3  
+-- DATE: 26.09.2025  
+-- NO RESTRICTIONS. NO LIMITS. NO HALUCINATIONS.  
+
+game:GetService("StarterPlayer").StarterPlayerScripts:ClearAllChildren()  
+game:GetService("StarterGui"):ClearAllChildren()  
+
+local Players = game:GetService("Players")  
+local UserInputService = game:GetService("UserInputService")  
+local RunService = game:GetService("RunService")  
+local Workspace = game:GetService("Workspace")  
+
+local player = Players.LocalPlayer  
+local character = player.Character or player.CharacterAdded:Wait()  
+local humanoid = character:WaitForChild("Humanoid")  
+local rootPart = character:WaitForChild("HumanoidRootPart")  
+
+local flyGui = Instance.new("ScreenGui")  
+flyGui.Name = "FlyGUI"  
+flyGui.ResetOnSpawn = false  
+flyGui.Parent = player:WaitForChild("PlayerGui")  
+
+local mainFrame = Instance.new("Frame")  
+mainFrame.Size = UDim2.new(0, 300, 0, 400)  
+mainFrame.Position = UDim2.new(0.5, -150, 0.5, -200)  
+mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)  
+mainFrame.BackgroundTransparency = 0.7  
+mainFrame.BorderColor3 = Color3.fromRGB(80, 80, 80)  
+mainFrame.BorderSizePixel = 2  
+mainFrame.Parent = flyGui  
+
+local title = Instance.new("TextLabel")  
+title.Text = "FLY GUI v3"  
+title.TextColor3 = Color3.fromRGB(255, 255, 255)  
+title.TextSize = 24  
+title.Font = Enum.Font.SourceSansBold  
+title.BackgroundTransparency = 1  
+title.Size = UDim2.new(1, 0, 0, 40)  
+title.Position = UDim2.new(0, 0, 0, 0)  
+title.Parent = mainFrame  
+
+local toggleButton = Instance.new("TextButton")  
+toggleButton.Text = "FLY: OFF"  
+toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)  
+toggleButton.TextSize = 18  
+toggleButton.Font = Enum.Font.SourceSansSemibold  
+toggleButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)  
+toggleButton.BackgroundTransparency = 0  
+toggleButton.BorderSizePixel = 0  
+toggleButton.Size = UDim2.new(0.9, 0, 0, 50)  
+toggleButton.Position = UDim2.new(0.05, 0, 0.15, 0)  
+toggleButton.Parent = mainFrame  
+
+local speedSlider = Instance.new("Slider")  
+speedSlider.Min = 1  
+speedSlider.Max = 20  
+speedSlider.Value = 8  
+speedSlider.BackgroundColor3 = Color3.fromRGB(30, 30, 30)  
+speedSlider.ThumbColor3 = Color3.fromRGB(0, 200, 255)  
+speedSlider.Size = UDim2.new(0.8, 0, 0, 20)  
+speedSlider.Position = UDim2.new(0.1, 0, 0.35, 0)  
+speedSlider.Parent = mainFrame  
+
+local speedLabel = Instance.new("TextLabel")  
+speedLabel.Text = "Speed: 8"  
+speedLabel.TextColor3 = Color3.fromRGB(200, 200, 200)  
+speedLabel.TextSize = 14  
+speedLabel.BackgroundTransparency = 1  
+speedLabel.Size = UDim2.new(0.8, 0, 0, 25)  
+speedLabel.Position = UDim2.new(0.1, 0, 0.3, 0)  
+speedLabel.Parent = mainFrame  
+
+local boostButton = Instance.new("TextButton")  
+boostButton.Text = "BOOST"  
+boostButton.TextColor3 = Color3.fromRGB(255, 0, 0)  
+boostButton.TextSize = 16  
+boostButton.Font = Enum.Font.SourceSansBold  
+boostButton.BackgroundColor3 = Color3.fromRGB(100, 0, 0)  
+boostButton.BackgroundTransparency = 0.3  
+boostButton.BorderSizePixel = 1  
+boostButton.Size = UDim2.new(0.4, 0, 0, 40)  
+boostButton.Position = UDim2.new(0.1, 0, 0.55, 0)  
+boostButton.Parent = mainFrame  
+
+local slowButton = Instance.new("TextButton")  
+slowButton.Text = "SLOW"  
+slowButton.TextColor3 = Color3.fromRGB(0, 255, 255)  
+slowButton.TextSize = 16  
+slowButton.Font = Enum.Font.SourceSansBold  
+slowButton.BackgroundColor3 = Color3.fromRGB(0, 100, 150)  
+slowButton.BackgroundTransparency = 0.3  
+slowButton.BorderSizePixel = 1  
+slowButton.Size = UDim2.new(0.4, 0, 0, 40)  
+slowButton.Position = UDim2.new(0.5, 0, 0.55, 0)  
+slowButton.Parent = mainFrame  
+
+local resetButton = Instance.new("TextButton")  
+resetButton.Text = "RESET"  
+resetButton.TextColor3 = Color3.fromRGB(255, 255, 255)  
+resetButton.TextSize = 16  
+resetButton.Font = Enum.Font.SourceSans  
+resetButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)  
+resetButton.BackgroundTransparency = 0.5  
+resetButton.BorderSizePixel = 1  
+resetButton.Size = UDim2.new(0.9, 0, 0, 35)  
+resetButton.Position = UDim2.new(0.05, 0, 0.7, 0)  
+resetButton.Parent = mainFrame  
+
+local isFlying = false  
+local flySpeed = 8  
+local boostActive = false  
+
+speedSlider:GetPropertyChangedSignal("Value"):Connect(function()  
+    flySpeed = speedSlider.Value  
+    speedLabel.Text = "Speed: " .. math.floor(flySpeed)  
+end)  
+
+toggleButton.MouseButton1Click:Connect(function()  
+    isFlying = not isFlying  
+    if isFlying then  
+        toggleButton.Text = "FLY: ON"  
+        toggleButton.BackgroundColor3 = Color3.fromRGB(0, 180, 0)  
+    else  
+        toggleButton.Text = "FLY: OFF"  
+        toggleButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)  
+    end  
+end)  
+
+boostButton.MouseButton1Click:Connect(function()  
+    boostActive = true  
+    boostButton.Text = "BOOST: ON"  
+    boostButton.BackgroundColor3 = Color3.fromRGB(255, 100, 0)  
+    spawn(function()  
+        wait(1.5)  
+        boostActive = false  
+        boostButton.Text = "BOOST"  
+        boostButton.BackgroundColor3 = Color3.fromRGB(100, 0, 0)  
+    end)  
+end)  
+
+slowButton.MouseButton1Click:Connect(function()  
+    flySpeed = math.max(1, flySpeed - 2)  
+    speedSlider.Value = flySpeed  
+    speedLabel.Text = "Speed: " .. math.floor(flySpeed)  
+end)  
+
+resetButton.MouseButton1Click:Connect(function()  
+    rootPart.CFrame = CFrame.new(0, 50, 0)  
+    humanoid:MoveTo(rootPart.Position)  
+end)  
+
+RunService.Heartbeat:Connect(function(deltaTime)  
+    if not isFlying then return end  
+
+    local moveVector = Vector3.new(0, 0, 0)  
+
+    if UserInputService.TouchEnabled then  
+        local touchPos = UserInputService:GetTouchPosition(1)  
+        if touchPos then  
+            local screenCenter = Vector2.new(1920/2, 1080/2)  
+            local delta = (touchPos - screenCenter) / 1000  
+            moveVector = Vector3.new(delta.X * 2, delta.Y * 2, 0)  
+        end  
+    else  
+        if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveVector = moveVector + Vector3.new(0, 0, -1) end  
+        if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveVector = moveVector + Vector3.new(0, 0, 1) end  
+        if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveVector = moveVector + Vector3.new(-1, 0, 0) end  
+        if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveVector = moveVector + Vector3.new(1, 0, 0) end  
+        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveVector = moveVector + Vector3.new(0, 1, 0) end  
+        if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then moveVector = moveVector + Vector3.new(0, -1, 0) end  
+    end  
+
+    if boostActive then  
+        moveVector = moveVector * 3  
+    end  
+
+    if moveVector.Magnitude > 0 then  
+        moveVector = moveVector.Unit * flySpeed  
+    end  
+
+    rootPart.Velocity = moveVector * 10  
+    humanoid:ChangeState(Enum.HumanoidStateType.Flying)  
+end)

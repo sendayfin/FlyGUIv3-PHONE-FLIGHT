@@ -1,3 +1,4 @@
+-- === [GUI] === (Оставляем как есть — не трогаем)
 local main = Instance.new("ScreenGui")
 local Frame = Instance.new("Frame")
 local up = Instance.new("TextButton")
@@ -129,7 +130,6 @@ mini2.Visible = false
 speeds = 1
 
 local speaker = game:GetService("Players").LocalPlayer
-
 local chr = game.Players.LocalPlayer.Character
 local hum = chr and chr:FindFirstChildWhichIsA("Humanoid")
 
@@ -141,14 +141,77 @@ game:GetService("StarterGui"):SetCore("SendNotification", {
 	Icon = "rbxthumb://type=Asset&id=5107182114&w=150&h=150"})
 Duration = 5;
 
-Frame.Active = true -- main = gui
+Frame.Active = true
 Frame.Draggable = true
 
+-- === [НОВЫЙ КОД: НЕВИДИМОСТЬ + ТЕНЬ] ===
+local shadow = nil
+local isGhostMode = false
+
+local function createShadow()
+	if shadow then shadow:Destroy() end
+	shadow = Instance.new("Part")
+	shadow.Name = "GhostShadow"
+	shadow.Size = Vector3.new(1.5, 0.1, 1.5)
+	shadow.Shape = Enum.PartType.Ball
+	shadow.Material = Enum.Material.Neon
+	shadow.Color = Color3.fromRGB(0, 0, 0)
+	shadow.Transparency = 0.7
+	shadow.CanCollide = false
+	shadow.Anchored = true
+	shadow.CanQuery = false
+	shadow.CastShadow = true
+	shadow.BrickColor = BrickColor.Black()
+	shadow.Parent = speaker.Character
+end
+
+local function makeGhost()
+	if not speaker.Character or not speaker.Character:FindFirstChild("HumanoidRootPart") then return end
+	createShadow()
+	
+	-- Скрываем ВСЕ части тела
+	for _, part in ipairs(speaker.Character:GetChildren()) do
+		if part:IsA("BasePart") then
+			part.Transparency = 1
+			part.CanCollide = false
+			part.CastShadow = true -- тень всё равно видна!
+		end
+	end
+	
+	-- Отключаем анимации
+	speaker.Character.Animate.Disabled = true
+	
+	-- Отключаем физику, чтобы не мешала
+	speaker.Character.Humanoid.PlatformStand = true
+	
+	-- Включаем режим призрака
+	isGhostMode = true
+end
+
+local function unmakeGhost()
+	if shadow then shadow:Destroy() end
+	isGhostMode = false
+	
+	-- Восстанавливаем видимость
+	for _, part in ipairs(speaker.Character:GetChildren()) do
+		if part:IsA("BasePart") then
+			part.Transparency = 0
+			part.CanCollide = true
+		end
+	end
+	
+	-- Включаем анимации
+	speaker.Character.Animate.Disabled = false
+	speaker.Character.Humanoid.PlatformStand = false
+end
+
+-- === [ПОЛЁТ] === (ОБНОВЛЁННЫЙ ПОД ПРИЗРАКА)
 onof.MouseButton1Down:connect(function()
-
 	if nowe == true then
+		-- ВЫКЛЮЧАЕМ ПОЛЁТ
 		nowe = false
-
+		unmakeGhost() -- Убираем призрака
+		
 		speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing,true)
 		speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown,true)
 		speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Flying,true)
@@ -166,27 +229,10 @@ onof.MouseButton1Down:connect(function()
 		speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Swimming,true)
 		speaker.Character.Humanoid:ChangeState(Enum.HumanoidStateType.RunningNoPhysics)
 	else 
+		-- ВКЛЮЧАЕМ ПОЛЁТ + ПРИЗРАКА
 		nowe = true
-
-
-
-		for i = 1, speeds do
-			spawn(function()
-
-				local hb = game:GetService("RunService").Heartbeat	
-
-
-				tpwalking = true
-				local chr = game.Players.LocalPlayer.Character
-				local hum = chr and chr:FindFirstChildWhichIsA("Humanoid")
-				while tpwalking and hb:Wait() and chr and hum and hum.Parent do
-					if hum.MoveDirection.Magnitude > 0 then
-						chr:TranslateBy(hum.MoveDirection)
-					end
-				end
-
-			end)
-		end
+		makeGhost() -- Сразу делаем призраком!
+		
 		game.Players.LocalPlayer.Character.Animate.Disabled = true
 		local Char = game.Players.LocalPlayer.Character
 		local Hum = Char:FindFirstChildOfClass("Humanoid") or Char:FindFirstChildOfClass("AnimationController")
@@ -194,6 +240,7 @@ onof.MouseButton1Down:connect(function()
 		for i,v in next, Hum:GetPlayingAnimationTracks() do
 			v:AdjustSpeed(0)
 		end
+		
 		speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing,false)
 		speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown,false)
 		speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Flying,false)
@@ -212,13 +259,8 @@ onof.MouseButton1Down:connect(function()
 		speaker.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Swimming)
 	end
 
-
-
-
-	if game:GetService("Players").LocalPlayer.Character:FindFirstChildOfClass("Humanoid").RigType == Enum.HumanoidRigType.R6 then
-
-
-
+	-- РЕЖИМ ПОЛЁТА (R6 и R15)
+	if game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid").RigType == Enum.HumanoidRigType.R6 then
 		local plr = game.Players.LocalPlayer
 		local torso = plr.Character.Torso
 		local flying = true
@@ -228,7 +270,6 @@ onof.MouseButton1Down:connect(function()
 		local maxspeed = 50
 		local speed = 0
 
-
 		local bg = Instance.new("BodyGyro", torso)
 		bg.P = 9e4
 		bg.maxTorque = Vector3.new(9e9, 9e9, 9e9)
@@ -236,47 +277,52 @@ onof.MouseButton1Down:connect(function()
 		local bv = Instance.new("BodyVelocity", torso)
 		bv.velocity = Vector3.new(0,0.1,0)
 		bv.maxForce = Vector3.new(9e9, 9e9, 9e9)
-		if nowe == true then
-			plr.Character.Humanoid.PlatformStand = true
-		end
-		while nowe == true or game:GetService("Players").LocalPlayer.Character.Humanoid.Health == 0 do
+
+		while nowe == true and game:GetService("Players").LocalPlayer.Character and game:GetService("Players").LocalPlayer.Character:FindFirstChild("Torso") do
 			game:GetService("RunService").RenderStepped:Wait()
 
+			-- Обновляем управление (WASD)
+			ctrl.f = (game.UserInputService:IsKeyDown(Enum.KeyCode.W) and 1 or 0)
+			ctrl.b = (game.UserInputService:IsKeyDown(Enum.KeyCode.S) and 1 or 0)
+			ctrl.l = (game.UserInputService:IsKeyDown(Enum.KeyCode.A) and 1 or 0)
+			ctrl.r = (game.UserInputService:IsKeyDown(Enum.KeyCode.D) and 1 or 0)
+
 			if ctrl.l + ctrl.r ~= 0 or ctrl.f + ctrl.b ~= 0 then
-				speed = speed+.5+(speed/maxspeed)
-				if speed > maxspeed then
-					speed = maxspeed
-				end
+				speed = speed + 0.5 + (speed / maxspeed)
+				if speed > maxspeed then speed = maxspeed end
 			elseif not (ctrl.l + ctrl.r ~= 0 or ctrl.f + ctrl.b ~= 0) and speed ~= 0 then
-				speed = speed-1
-				if speed < 0 then
-					speed = 0
-				end
+				speed = speed - 1
+				if speed < 0 then speed = 0 end
 			end
-			if (ctrl.l + ctrl.r) ~= 0 or (ctrl.f + ctrl.b) ~= 0 then
-				bv.velocity = ((game.Workspace.CurrentCamera.CoordinateFrame.lookVector * (ctrl.f+ctrl.b)) + ((game.Workspace.CurrentCamera.CoordinateFrame * CFrame.new(ctrl.l+ctrl.r,(ctrl.f+ctrl.b)*.2,0).p) - game.Workspace.CurrentCamera.CoordinateFrame.p))*speed
-				lastctrl = {f = ctrl.f, b = ctrl.b, l = ctrl.l, r = ctrl.r}
-			elseif (ctrl.l + ctrl.r) == 0 and (ctrl.f + ctrl.b) == 0 and speed ~= 0 then
-				bv.velocity = ((game.Workspace.CurrentCamera.CoordinateFrame.lookVector * (lastctrl.f+lastctrl.b)) + ((game.Workspace.CurrentCamera.CoordinateFrame * CFrame.new(lastctrl.l+lastctrl.r,(lastctrl.f+lastctrl.b)*.2,0).p) - game.Workspace.CurrentCamera.CoordinateFrame.p))*speed
+
+			local cam = game.Workspace.CurrentCamera
+			local look = cam.CoordinateFrame.lookVector
+			local right = cam.CoordinateFrame.rightVector
+			local up = cam.CoordinateFrame.upVector
+
+			local move = (look * (ctrl.f - ctrl.b)) + (right * (ctrl.r - ctrl.l)) + (up * (game.UserInputService:IsKeyDown(Enum.KeyCode.Space) and 1 or 0) - up * (game.UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) and 1 or 0))
+
+			if move.Magnitude > 0 then
+				bv.velocity = move * speed
+				bg.cframe = cam.CoordinateFrame * CFrame.Angles(-math.rad((ctrl.f - ctrl.b) * 50 * speed / maxspeed), 0, 0)
 			else
 				bv.velocity = Vector3.new(0,0,0)
 			end
-			--	game.Players.LocalPlayer.Character.Animate.Disabled = true
-			bg.cframe = game.Workspace.CurrentCamera.CoordinateFrame * CFrame.Angles(-math.rad((ctrl.f+ctrl.b)*50*speed/maxspeed),0,0)
+
+			-- Обновляем тень в реальном времени
+			if shadow and shadow.Parent then
+				shadow.CFrame = CFrame.new(torso.Position + Vector3.new(0, -0.8, 0))
+				shadow.Transparency = 0.7 + math.sin(os.clock() * 2) * 0.2 -- пульсация
+			end
 		end
-		ctrl = {f = 0, b = 0, l = 0, r = 0}
-		lastctrl = {f = 0, b = 0, l = 0, r = 0}
-		speed = 0
+
 		bg:Destroy()
 		bv:Destroy()
-		plr.Character.Humanoid.PlatformStand = false
+		speaker.Character.Humanoid.PlatformStand = false
 		game.Players.LocalPlayer.Character.Animate.Disabled = false
-		tpwalking = false
-
-
-
 
 	else
+		-- R15
 		local plr = game.Players.LocalPlayer
 		local UpperTorso = plr.Character.UpperTorso
 		local flying = true
@@ -286,7 +332,6 @@ onof.MouseButton1Down:connect(function()
 		local maxspeed = 50
 		local speed = 0
 
-
 		local bg = Instance.new("BodyGyro", UpperTorso)
 		bg.P = 9e4
 		bg.maxTorque = Vector3.new(9e9, 9e9, 9e9)
@@ -294,111 +339,94 @@ onof.MouseButton1Down:connect(function()
 		local bv = Instance.new("BodyVelocity", UpperTorso)
 		bv.velocity = Vector3.new(0,0.1,0)
 		bv.maxForce = Vector3.new(9e9, 9e9, 9e9)
-		if nowe == true then
-			plr.Character.Humanoid.PlatformStand = true
-		end
-		while nowe == true or game:GetService("Players").LocalPlayer.Character.Humanoid.Health == 0 do
+
+		while nowe == true and game:GetService("Players").LocalPlayer.Character and game:GetService("Players").LocalPlayer.Character:FindFirstChild("UpperTorso") do
 			wait()
 
+			-- Обновляем управление (WASD)
+			ctrl.f = (game.UserInputService:IsKeyDown(Enum.KeyCode.W) and 1 or 0)
+			ctrl.b = (game.UserInputService:IsKeyDown(Enum.KeyCode.S) and 1 or 0)
+			ctrl.l = (game.UserInputService:IsKeyDown(Enum.KeyCode.A) and 1 or 0)
+			ctrl.r = (game.UserInputService:IsKeyDown(Enum.KeyCode.D) and 1 or 0)
+
 			if ctrl.l + ctrl.r ~= 0 or ctrl.f + ctrl.b ~= 0 then
-				speed = speed+.5+(speed/maxspeed)
-				if speed > maxspeed then
-					speed = maxspeed
-				end
+				speed = speed + 0.5 + (speed / maxspeed)
+				if speed > maxspeed then speed = maxspeed end
 			elseif not (ctrl.l + ctrl.r ~= 0 or ctrl.f + ctrl.b ~= 0) and speed ~= 0 then
-				speed = speed-1
-				if speed < 0 then
-					speed = 0
-				end
+				speed = speed - 1
+				if speed < 0 then speed = 0 end
 			end
-			if (ctrl.l + ctrl.r) ~= 0 or (ctrl.f + ctrl.b) ~= 0 then
-				bv.velocity = ((game.Workspace.CurrentCamera.CoordinateFrame.lookVector * (ctrl.f+ctrl.b)) + ((game.Workspace.CurrentCamera.CoordinateFrame * CFrame.new(ctrl.l+ctrl.r,(ctrl.f+ctrl.b)*.2,0).p) - game.Workspace.CurrentCamera.CoordinateFrame.p))*speed
-				lastctrl = {f = ctrl.f, b = ctrl.b, l = ctrl.l, r = ctrl.r}
-			elseif (ctrl.l + ctrl.r) == 0 and (ctrl.f + ctrl.b) == 0 and speed ~= 0 then
-				bv.velocity = ((game.Workspace.CurrentCamera.CoordinateFrame.lookVector * (lastctrl.f+lastctrl.b)) + ((game.Workspace.CurrentCamera.CoordinateFrame * CFrame.new(lastctrl.l+lastctrl.r,(lastctrl.f+lastctrl.b)*.2,0).p) - game.Workspace.CurrentCamera.CoordinateFrame.p))*speed
+
+			local cam = game.Workspace.CurrentCamera
+			local look = cam.CoordinateFrame.lookVector
+			local right = cam.CoordinateFrame.rightVector
+			local up = cam.CoordinateFrame.upVector
+
+			local move = (look * (ctrl.f - ctrl.b)) + (right * (ctrl.r - ctrl.l)) + (up * (game.UserInputService:IsKeyDown(Enum.KeyCode.Space) and 1 or 0) - up * (game.UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) and 1 or 0))
+
+			if move.Magnitude > 0 then
+				bv.velocity = move * speed
+				bg.cframe = cam.CoordinateFrame * CFrame.Angles(-math.rad((ctrl.f - ctrl.b) * 50 * speed / maxspeed), 0, 0)
 			else
 				bv.velocity = Vector3.new(0,0,0)
 			end
 
-			bg.cframe = game.Workspace.CurrentCamera.CoordinateFrame * CFrame.Angles(-math.rad((ctrl.f+ctrl.b)*50*speed/maxspeed),0,0)
+			-- Обновляем тень
+			if shadow and shadow.Parent then
+				shadow.CFrame = CFrame.new(UpperTorso.Position + Vector3.new(0, -0.8, 0))
+				shadow.Transparency = 0.7 + math.sin(os.clock() * 2) * 0.2
+			end
 		end
-		ctrl = {f = 0, b = 0, l = 0, r = 0}
-		lastctrl = {f = 0, b = 0, l = 0, r = 0}
-		speed = 0
+
 		bg:Destroy()
 		bv:Destroy()
-		plr.Character.Humanoid.PlatformStand = false
+		speaker.Character.Humanoid.PlatformStand = false
 		game.Players.LocalPlayer.Character.Animate.Disabled = false
-		tpwalking = false
-
-
-
 	end
-
-
-
-
-
 end)
 
+-- === [UP/DOWN] === (Оставляем как есть — теперь они работают с тенью)
 local tis
-
 up.MouseButton1Down:connect(function()
 	tis = up.MouseEnter:connect(function()
 		while tis do
 			wait()
-			game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0,1,0)
+			if speaker.Character and speaker.Character:FindFirstChild("HumanoidRootPart") then
+				speaker.Character.HumanoidRootPart.CFrame = speaker.Character.HumanoidRootPart.CFrame * CFrame.new(0,1,0)
+			end
 		end
 	end)
 end)
 
 up.MouseLeave:connect(function()
-	if tis then
-		tis:Disconnect()
-		tis = nil
-	end
+	if tis then tis:Disconnect() tis = nil end
 end)
 
 local dis
-
 down.MouseButton1Down:connect(function()
 	dis = down.MouseEnter:connect(function()
 		while dis do
 			wait()
-			game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0,-1,0)
+			if speaker.Character and speaker.Character:FindFirstChild("HumanoidRootPart") then
+				speaker.Character.HumanoidRootPart.CFrame = speaker.Character.HumanoidRootPart.CFrame * CFrame.new(0,-1,0)
+			end
 		end
 	end)
 end)
 
 down.MouseLeave:connect(function()
-	if dis then
-		dis:Disconnect()
-		dis = nil
-	end
+	if dis then dis:Disconnect() dis = nil end
 end)
 
-
-game:GetService("Players").LocalPlayer.CharacterAdded:Connect(function(char)
-	wait(0.7)
-	game.Players.LocalPlayer.Character.Humanoid.PlatformStand = false
-	game.Players.LocalPlayer.Character.Animate.Disabled = false
-
-end)
-
-
+-- === [SPEED] === (Оставляем как есть)
 plus.MouseButton1Down:connect(function()
 	speeds = speeds + 1
 	speed.Text = speeds
 	if nowe == true then
-
-
 		tpwalking = false
 		for i = 1, speeds do
 			spawn(function()
-
 				local hb = game:GetService("RunService").Heartbeat	
-
-
 				tpwalking = true
 				local chr = game.Players.LocalPlayer.Character
 				local hum = chr and chr:FindFirstChildWhichIsA("Humanoid")
@@ -407,11 +435,11 @@ plus.MouseButton1Down:connect(function()
 						chr:TranslateBy(hum.MoveDirection)
 					end
 				end
-
 			end)
 		end
 	end
 end)
+
 mine.MouseButton1Down:connect(function()
 	if speeds == 1 then
 		speed.Text = 'cannot be less than 1'
@@ -424,10 +452,7 @@ mine.MouseButton1Down:connect(function()
 			tpwalking = false
 			for i = 1, speeds do
 				spawn(function()
-
 					local hb = game:GetService("RunService").Heartbeat	
-
-
 					tpwalking = true
 					local chr = game.Players.LocalPlayer.Character
 					local hum = chr and chr:FindFirstChildWhichIsA("Humanoid")
@@ -436,13 +461,13 @@ mine.MouseButton1Down:connect(function()
 							chr:TranslateBy(hum.MoveDirection)
 						end
 					end
-
 				end)
 			end
 		end
 	end
 end)
 
+-- === [GUI] === (Оставляем как есть)
 closebutton.MouseButton1Click:Connect(function()
 	main:Destroy()
 end)
@@ -471,4 +496,14 @@ mini2.MouseButton1Click:Connect(function()
 	mini2.Visible = false
 	main.Frame.BackgroundTransparency = 0 
 	closebutton.Position =  UDim2.new(0, 0, -1, 27)
+end)
+
+-- === [РЕАКЦИЯ НА СМЕРТЬ И ПЕРЕРОЖДЕНИЕ] ===
+game.Players.LocalPlayer.CharacterAdded:Connect(function(char)
+	wait(0.7)
+	if nowe then
+		makeGhost() -- Восстанавливаем призрака
+	else
+		unmakeGhost() -- Убираем призрака
+	end
 end)

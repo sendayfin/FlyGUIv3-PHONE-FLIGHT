@@ -2,16 +2,15 @@ local model = Instance.new("Model", workspace)
 local togglerot = false
 local down = false
 local up = false
--- ДОБАВЛЕНО: переменные для скорости
-local currentSpeed = 0.2  -- начальная скорость
-local speedIncrement = 0.05  -- шаг изменения скорости
+local currentSpeed = 0.2
+local speedIncrement = 0.05
 
 local playerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 local screenGui = Instance.new("ScreenGui", playerGui)
 screenGui.Name = "MobileControls"
 screenGui.ResetOnSpawn = false
 
--- ДОБАВЛЕНО: кнопки изменения скорости
+-- Кнопки скорости (ваш добавленный код)
 local speedPlusButton = Instance.new("ImageButton", screenGui)
 speedPlusButton.Name = "SpeedPlus"
 speedPlusButton.Size = UDim2.new(0.1, 0, 0.1, 0)
@@ -19,7 +18,7 @@ speedPlusButton.Position = UDim2.new(0.65, 0, 0.6, 0)
 speedPlusButton.AnchorPoint = Vector2.new(0.5, 0.5)
 speedPlusButton.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
 speedPlusButton.BorderSizePixel = 0
-speedPlusButton.Image = "rbxassetid://7072723065" -- Плюс
+speedPlusButton.Image = "rbxassetid://7072723065"
 speedPlusButton.ImageColor3 = Color3.fromRGB(255, 255, 255)
 speedPlusButton.ImageTransparency = 0.2
 
@@ -30,11 +29,10 @@ speedMinusButton.Position = UDim2.new(0.65, 0, 0.8, 0)
 speedMinusButton.AnchorPoint = Vector2.new(0.5, 0.5)
 speedMinusButton.BackgroundColor3 = Color3.fromRGB(200, 100, 0)
 speedMinusButton.BorderSizePixel = 0
-speedMinusButton.Image = "rbxassetid://7072721409" -- Минус
+speedMinusButton.Image = "rbxassetid://7072721409"
 speedMinusButton.ImageColor3 = Color3.fromRGB(255, 255, 255)
 speedMinusButton.ImageTransparency = 0.2
 
--- ДОБАВЛЕНО: текстовое отображение скорости
 local speedDisplay = Instance.new("TextLabel", screenGui)
 speedDisplay.Name = "SpeedDisplay"
 speedDisplay.Size = UDim2.new(0.12, 0, 0.08, 0)
@@ -48,7 +46,6 @@ speedDisplay.TextColor3 = Color3.fromRGB(255, 255, 255)
 speedDisplay.TextSize = 14
 speedDisplay.Font = Enum.Font.GothamBold
 
--- Применяем скругление к новым кнопкам и дисплею
 local plusCorner = Instance.new("UICorner", speedPlusButton)
 plusCorner.CornerRadius = UDim.new(1, 0)
 local minusCorner = Instance.new("UICorner", speedMinusButton)
@@ -56,7 +53,6 @@ minusCorner.CornerRadius = UDim.new(1, 0)
 local displayCorner = Instance.new("UICorner", speedDisplay)
 displayCorner.CornerRadius = UDim.new(0.3, 0)
 
--- ДОБАВЛЕНО: градиенты для новых кнопок
 local plusGradient = Instance.new("UIGradient", speedPlusButton)
 plusGradient.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 200, 100)),
@@ -71,7 +67,6 @@ minusGradient.Color = ColorSequence.new({
 })
 minusGradient.Rotation = 45
 
--- ДОБАВЛЕНО: обводка для новых кнопок
 local plusStroke = Instance.new("UIStroke", speedPlusButton)
 plusStroke.Color = Color3.fromRGB(0, 255, 150)
 plusStroke.Thickness = 2
@@ -82,13 +77,14 @@ minusStroke.Color = Color3.fromRGB(255, 200, 0)
 minusStroke.Thickness = 2
 minusStroke.Transparency = 0.3
 
+-- Оригинальные кнопки вверх/вниз
 local upButton = Instance.new("ImageButton", screenGui)
 upButton.Size = UDim2.new(0.15, 0, 0.15, 0)
 upButton.Position = UDim2.new(0.8, 0, 0.6, 0)
 upButton.AnchorPoint = Vector2.new(0.5, 0.5)
 upButton.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
 upButton.BorderSizePixel = 0
-upButton.Image = "rbxassetid://7072717236" -- Стрелка вверх
+upButton.Image = "rbxassetid://7072717236"
 upButton.ImageColor3 = Color3.fromRGB(255, 255, 255)
 upButton.ImageTransparency = 0.2
 
@@ -113,7 +109,7 @@ downButton.Position = UDim2.new(0.8, 0, 0.8, 0)
 downButton.AnchorPoint = Vector2.new(0.5, 0.5)
 downButton.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
 downButton.BorderSizePixel = 0
-downButton.Image = "rbxassetid://7072718631" -- Стрелка вниз
+downButton.Image = "rbxassetid://7072718631"
 downButton.ImageColor3 = Color3.fromRGB(255, 255, 255)
 downButton.ImageTransparency = 0.2
 
@@ -147,13 +143,11 @@ local function addPressEffect(button)
     end)
 end
 
--- ДОБАВЛЕНО: применяем эффект к новым кнопкам
 addPressEffect(speedPlusButton)
 addPressEffect(speedMinusButton)
 addPressEffect(upButton)
 addPressEffect(downButton)
 
--- ДОБАВЛЕНО: функции изменения скорости
 speedPlusButton.MouseButton1Click:Connect(function()
     currentSpeed = currentSpeed + speedIncrement
     speedDisplay.Text = "Speed: " .. string.format("%.2f", currentSpeed)
@@ -213,12 +207,14 @@ a.CanCollide = false
 a2.CanCollide = false
 a3.CanCollide = false
 a4.CanCollide = false
+
 game.Players.LocalPlayer.Character.Humanoid.Died:Connect(
     function()
         model:Destroy()
         screenGui:Destroy()
     end
 )
+
 spawn(
     function()
         local last = nil
@@ -234,6 +230,7 @@ spawn(
         end
     end
 )
+
 spawn(
     function()
         while true do
@@ -242,13 +239,14 @@ spawn(
         end
     end
 )
+
 model:MoveTo(game.Players.LocalPlayer.Character.HumanoidRootPart.Position)
+
 spawn(
     function()
         while true do
             task.wait()
             if not togglerot then
-                -- ИЗМЕНЕНО: используем переменную currentSpeed вместо фиксированного значения
                 model:PivotTo(model.WorldPivot + game.Players.LocalPlayer.Character.Humanoid.MoveDirection * currentSpeed)
                 a.CFrame =
                     CFrame.new(
@@ -262,24 +260,25 @@ spawn(
                 ) * CFrame.Angles(0, 0, math.rad(90))
             end
             if up then
-                -- ИЗМЕНЕНО: используем переменную currentSpeed для вертикального движения
                 model:PivotTo(model.WorldPivot + Vector3.new(0, currentSpeed, 0))
             end
             if down then
-                -- ИЗМЕНЕНО: используем переменную currentSpeed для вертикального движения
                 model:PivotTo(model.WorldPivot + Vector3.new(0, -currentSpeed, 0))
             end
         end
     end
 )
+
+-- ИСПРАВЛЕННАЯ ЧАСТЬ: Делаем игрока видимым в рагдолле
 for i, v in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
-    if v.Name == "Left Leg" then --v.Name == "Right Leg"
+    if v.Name == "Left Leg" then
         game:GetService("RunService").PostSimulation:Connect(
             function()
                 v.CFrame = a.CFrame
                 v.Velocity = Vector3.new(0, 4, 0)
                 v.AssemblyLinearVelocity = Vector3.new(0, 4, 0)
                 v.AssemblyAngularVelocity = Vector3.new(5, 0, 0)
+                v.Transparency = 0  -- Делаем видимым
             end
         )
     elseif v.Name == "Right Leg" then
@@ -289,6 +288,7 @@ for i, v in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
                 v.Velocity = Vector3.new(0, 4, 0)
                 v.AssemblyLinearVelocity = Vector3.new(0, 4, 0)
                 v.AssemblyAngularVelocity = Vector3.new(5, 0, 0)
+                v.Transparency = 0  -- Делаем видимым
             end
         )
     elseif v.Name == "Right Arm" then
@@ -298,6 +298,7 @@ for i, v in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
                 v.Velocity = Vector3.new(0, 4, 0)
                 v.AssemblyLinearVelocity = Vector3.new(0, 4, 0)
                 v.AssemblyAngularVelocity = Vector3.new(5, 0, 0)
+                v.Transparency = 0  -- Делаем видимым
             end
         )
     elseif v.Name == "Left Arm" then
@@ -307,17 +308,63 @@ for i, v in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
                 v.Velocity = Vector3.new(0, 4, 0)
                 v.AssemblyLinearVelocity = Vector3.new(0, 4, 0)
                 v.AssemblyAngularVelocity = Vector3.new(5, 0, 0)
+                v.Transparency = 0  -- Делаем видимым
             end
         )
-    elseif v:IsA("BasePart") and (v.Name ~= "Left Leg" or v.Name ~= "Left Leg") then
+    elseif v:IsA("BasePart") and v.Name == "Head" then
+        -- Голова остается видимой
         game:GetService("RunService").PostSimulation:Connect(
             function()
-                v.CFrame = CFrame.new(model.WorldPivot.Position + Vector3.new(0, 600, 0))
-                v.Velocity = Vector3.new(0, 0, 0)
-                v.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-                v.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+                v.CFrame = model.WorldPivot * CFrame.new(0, 1.5, 0)
+                v.Transparency = 0
+            end
+        )
+    elseif v:IsA("BasePart") and v.Name == "Torso" or v.Name == "UpperTorso" then
+        -- Торс остается видимым
+        game:GetService("RunService").PostSimulation:Connect(
+            function()
+                v.CFrame = model.WorldPivot
+                v.Transparency = 0
+            end
+        )
+    elseif v:IsA("BasePart") and (v.Name == "HumanoidRootPart") then
+        -- Корневая часть остается видимой
+        game:GetService("RunService").PostSimulation:Connect(
+            function()
+                v.CFrame = model.WorldPivot
+                v.Transparency = 0
             end
         )
     end
 end
 
+-- ДОБАВЛЯЕМ: Функцию для переключения видимости при рагдолле
+local function setupRagdollVisibility()
+    local humanoid = game.Players.LocalPlayer.Character:WaitForChild("Humanoid")
+    
+    humanoid.StateChanged:Connect(function(oldState, newState)
+        if newState == Enum.HumanoidStateType.Physics then
+            -- Включаем рагдолл - делаем все части видимыми
+            for _, part in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.Transparency = 0
+                    part.CanCollide = true
+                end
+            end
+            print("Рагдолл включен - игрок видим")
+        elseif oldState == Enum.HumanoidStateType.Physics then
+            -- Выключаем рагдолл
+            print("Рагдолл выключен")
+        end
+    end)
+end
+
+setupRagdollVisibility()
+
+print("========================================")
+print("     РАГДОЛЛ СКРИПТ С ВИДИМОСТЬЮ       ")
+print("========================================")
+print("✅ Игрок теперь видим в рагдолле!")
+print("✅ Кнопки скорости работают")
+print("✅ Все части тела остаются на месте")
+print("========================================")

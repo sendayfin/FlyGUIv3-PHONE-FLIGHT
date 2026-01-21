@@ -10,7 +10,7 @@ local screenGui = Instance.new("ScreenGui", playerGui)
 screenGui.Name = "MobileControls"
 screenGui.ResetOnSpawn = false
 
--- ТВОИ КНОПКИ СКОРОСТИ (без изменений)
+-- Кнопки скорости (ваш добавленный код)
 local speedPlusButton = Instance.new("ImageButton", screenGui)
 speedPlusButton.Name = "SpeedPlus"
 speedPlusButton.Size = UDim2.new(0.1, 0, 0.1, 0)
@@ -77,6 +77,7 @@ minusStroke.Color = Color3.fromRGB(255, 200, 0)
 minusStroke.Thickness = 2
 minusStroke.Transparency = 0.3
 
+-- Оригинальные кнопки вверх/вниз
 local upButton = Instance.new("ImageButton", screenGui)
 upButton.Size = UDim2.new(0.15, 0, 0.15, 0)
 upButton.Position = UDim2.new(0.8, 0, 0.6, 0)
@@ -179,27 +180,20 @@ downButton.MouseButton1Up:Connect(function()
     down = false
 end)
 
--- ТВОИ 4 ЧАСТИ ДЛЯ КОНЕЧНОСТЕЙ
 local a = Instance.new("Part", model)
-a.Name = "LeftLegAnchor"
 a.Size = Vector3.new(1.1, 2.1, 1.1)
 local a2 = Instance.new("Part", model)
-a2.Name = "RightLegAnchor"
 a2.Size = Vector3.new(1.1, 2.1, 1.1)
 local a3 = Instance.new("Part", model)
-a3.Name = "LeftArmAnchor"
 a3.Size = Vector3.new(1.1, 2.1, 1.1)
 local a4 = Instance.new("Part", model)
-a4.Name = "RightArmAnchor"
 a4.Size = Vector3.new(1.1, 2.1, 1.1)
-
 a4.Position = Vector3.new(0, 5, 0)
 a.Anchored = true
 a.Rotation = Vector3.new(90, 0, 0)
 a.Position = Vector3.new(-0.5, 0.5, 0)
 a3.Position = Vector3.new(0, 3.15, 0)
 a2.Position = Vector3.new(0, 1.3, 0)
-
 a.CanQuery = false
 a2.CanQuery = false
 a3.CanQuery = false
@@ -228,9 +222,9 @@ spawn(
             if last == nil then
                 last = v
             else
-                local weld = Instance.new("WeldConstraint", model)
-                weld.Part0 = last
-                weld.Part1 = v
+                local a = Instance.new("WeldConstraint", model)
+                a.Part0 = last
+                a.Part1 = v
                 last = v
             end
         end
@@ -275,72 +269,102 @@ spawn(
     end
 )
 
--- ВАЖНОЕ ИЗМЕНЕНИЕ: ТОЛЬКО КОНЕЧНОСТИ ПРИВЯЗЫВАЮТСЯ К МОДЕЛИ, ОСТАЛЬНОЕ ТЕЛО - РАГДОЛЛ
+-- ИСПРАВЛЕННАЯ ЧАСТЬ: Делаем игрока видимым в рагдолле
 for i, v in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
-    -- ЛЕВАЯ НОГА - привязывается к модели (прозрачная часть 'a')
-    if v.Name == "Left Leg" or v.Name == "LeftLowerLeg" then
+    if v.Name == "Left Leg" then
         game:GetService("RunService").PostSimulation:Connect(
             function()
                 v.CFrame = a.CFrame
                 v.Velocity = Vector3.new(0, 4, 0)
                 v.AssemblyLinearVelocity = Vector3.new(0, 4, 0)
                 v.AssemblyAngularVelocity = Vector3.new(5, 0, 0)
-                v.Transparency = 0  -- Видимая
+                v.Transparency = 0  -- Делаем видимым
             end
         )
-    
-    -- ПРАВАЯ НОГА - привязывается к модели (прозрачная часть 'a2')
-    elseif v.Name == "Right Leg" or v.Name == "RightLowerLeg" then
+    elseif v.Name == "Right Leg" then
         game:GetService("RunService").PostSimulation:Connect(
             function()
                 v.CFrame = a2.CFrame * CFrame.Angles(math.rad(180), 0, 0)
                 v.Velocity = Vector3.new(0, 4, 0)
                 v.AssemblyLinearVelocity = Vector3.new(0, 4, 0)
                 v.AssemblyAngularVelocity = Vector3.new(5, 0, 0)
-                v.Transparency = 0  -- Видимая
+                v.Transparency = 0  -- Делаем видимым
             end
         )
-    
-    -- ПРАВАЯ РУКА - привязывается к модели (прозрачная часть 'a4')
-    elseif v.Name == "Right Arm" or v.Name == "RightLowerArm" then
+    elseif v.Name == "Right Arm" then
         game:GetService("RunService").PostSimulation:Connect(
             function()
                 v.CFrame = a4.CFrame * CFrame.Angles(math.rad(180), math.rad(-90), 0)
                 v.Velocity = Vector3.new(0, 4, 0)
                 v.AssemblyLinearVelocity = Vector3.new(0, 4, 0)
                 v.AssemblyAngularVelocity = Vector3.new(5, 0, 0)
-                v.Transparency = 0  -- Видимая
+                v.Transparency = 0  -- Делаем видимым
             end
         )
-    
-    -- ЛЕВАЯ РУКА - привязывается к модели (прозрачная часть 'a3')
-    elseif v.Name == "Left Arm" or v.Name == "LeftLowerArm" then
+    elseif v.Name == "Left Arm" then
         game:GetService("RunService").PostSimulation:Connect(
             function()
                 v.CFrame = a3.CFrame
                 v.Velocity = Vector3.new(0, 4, 0)
                 v.AssemblyLinearVelocity = Vector3.new(0, 4, 0)
                 v.AssemblyAngularVelocity = Vector3.new(5, 0, 0)
-                v.Transparency = 0  -- Видимая
+                v.Transparency = 0  -- Делаем видимым
             end
         )
-    
-    -- ВСЕ ОСТАЛЬНЫЕ ЧАСТИ ТЕЛА - ОСТАЮТСЯ РАГДОЛЛ (НИЧЕГО С НИМИ НЕ ДЕЛАЕМ)
-    elseif v:IsA("BasePart") and 
-           v.Name ~= "Left Leg" and v.Name ~= "LeftLowerLeg" and
-           v.Name ~= "Right Leg" and v.Name ~= "RightLowerLeg" and
-           v.Name ~= "Right Arm" and v.Name ~= "RightLowerArm" and
-           v.Name ~= "Left Arm" and v.Name ~= "LeftLowerArm" then
-        -- НИЧЕГО НЕ ДЕЛАЕМ! Эти части остаются рагдоллом
-        -- Они будут двигаться физикой Roblox естественно
+    elseif v:IsA("BasePart") and v.Name == "Head" then
+        -- Голова остается видимой
+        game:GetService("RunService").PostSimulation:Connect(
+            function()
+                v.CFrame = model.WorldPivot * CFrame.new(0, 1.5, 0)
+                v.Transparency = 0
+            end
+        )
+    elseif v:IsA("BasePart") and v.Name == "Torso" or v.Name == "UpperTorso" then
+        -- Торс остается видимым
+        game:GetService("RunService").PostSimulation:Connect(
+            function()
+                v.CFrame = model.WorldPivot
+                v.Transparency = 0
+            end
+        )
+    elseif v:IsA("BasePart") and (v.Name == "HumanoidRootPart") then
+        -- Корневая часть остается видимой
+        game:GetService("RunService").PostSimulation:Connect(
+            function()
+                v.CFrame = model.WorldPivot
+                v.Transparency = 0
+            end
+        )
     end
 end
 
+-- ДОБАВЛЯЕМ: Функцию для переключения видимости при рагдолле
+local function setupRagdollVisibility()
+    local humanoid = game.Players.LocalPlayer.Character:WaitForChild("Humanoid")
+    
+    humanoid.StateChanged:Connect(function(oldState, newState)
+        if newState == Enum.HumanoidStateType.Physics then
+            -- Включаем рагдолл - делаем все части видимыми
+            for _, part in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.Transparency = 0
+                    part.CanCollide = true
+                end
+            end
+            print("Рагдолл включен - игрок видим")
+        elseif oldState == Enum.HumanoidStateType.Physics then
+            -- Выключаем рагдолл
+            print("Рагдолл выключен")
+        end
+    end)
+end
+
+setupRagdollVisibility()
+
 print("========================================")
-print("     ЧАСТИЧНЫЙ РАГДОЛЛ СКРИПТ         ")
+print("     РАГДОЛЛ СКРИПТ С ВИДИМОСТЬЮ       ")
 print("========================================")
-print("✅ Только конечности привязаны к модели")
-print("✅ Торс, голова и остальное - рагдолл")
-print("✅ Другие игроки видят твоего персонажа")
+print("✅ Игрок теперь видим в рагдолле!")
 print("✅ Кнопки скорости работают")
+print("✅ Все части тела остаются на месте")
 print("========================================")

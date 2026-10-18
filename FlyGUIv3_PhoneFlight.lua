@@ -7,7 +7,7 @@ local Camera = workspace.CurrentCamera
 local playerGui = LocalPlayer:WaitForChild("PlayerGui")
 
 -- ==========================================
--- UI МЕНЮ (как в дрифте)
+-- UI МЕНЮ
 -- ==========================================
 local screenGui = Instance.new("ScreenGui", playerGui)
 screenGui.Name = "DroneUI"
@@ -55,31 +55,61 @@ status.TextSize = 12
 local fpvOverlay = Instance.new("ImageLabel", screenGui)
 fpvOverlay.Size = UDim2.new(1, 0, 1, 0)
 fpvOverlay.BackgroundTransparency = 1
-fpvOverlay.Image = "rbxassetid://1316045217" -- Текстура помех (примерная)
+fpvOverlay.Image = "rbxassetid://1316045217" -- Текстура помех
 fpvOverlay.ImageTransparency = 1
 fpvOverlay.ImageColor3 = Color3.fromRGB(255, 255, 255)
 fpvOverlay.Visible = false
 
 local droneSound = Instance.new("Sound", screenGui)
-droneSound.SoundId = "rbxassetid://9046535924" -- Звук жужжания дрона (примерный)
+droneSound.SoundId = "rbxassetid://9046535924" -- Звук жужжания дрона
 droneSound.Volume = 1
 droneSound.Looped = true
 
 -- ==========================================
--- ФУНКЦИИ ДРОНА
+-- ЛОГИКА ДРОНА
 -- ==========================================
 local isDroneActive = false
 local droneModel = nil
 local humanoidRoot = nil
 local savedCFrame = nil
-local moveInput = Vector2.new(0, 0) -- Для виртуального джойстика
-local cameraRotation = Vector2.new(0, 0)
+local moveVector = Vector3.zero
+local savedCameraType = Camera.CameraType
+
+-- Функция для получения направления от джойстика
+local function getMoveDirection()
+    local direction = Vector3.zero
+    
+    -- Управление для ПК (WASD)
+    if UserInputService.KeyboardEnabled then
+        if UserInputService:IsKeyDown(Enum.KeyCode.W) then direction += Vector3.new(0, 0, -1) end
+        if UserInputService:IsKeyDown(Enum.KeyCode.S) then direction += Vector3.new(0, 0, 1) end
+        if UserInputService:IsKeyDown(Enum.KeyCode.A) then direction += Vector3.new(-1, 0, 0) end
+        if UserInputService:IsKeyDown(Enum.KeyCode.D) then direction += Vector3.new(1, 0, 0) end
+    end
+    
+    -- Управление для телефона (стандартный джойстик)
+    if UserInputService.TouchEnabled then
+        -- Здесь мы эмулируем управление через Humanoid.MoveDirection
+        local char = LocalPlayer.Character
+        if char and char:FindFirstChild("Humanoid") then
+            local humanoid = char.Humanoid
+            if humanoid.MoveDirection.Magnitude > 0 then
+                -- Берем направление из камеры
+                local camLook = Camera.CFrame.LookVector
+                local camRight = Camera.CFrame.RightVector
+                direction = (camLook * humanoid.MoveDirection.Z) + (camRight * humanoid.MoveDirection.X)
+            end
+        end
+    end
+    
+    return direction.Unit
+end
 
 local function createDrone()
     local model = Instance.new("Model", workspace)
     model.Name = "FPV_Drone"
     
-    -- Корпус
+    -- Корпус (плоский ромб)
     local body = Instance.new("Part", model)
     body.Size = Vector3.new(1.5, 0.2, 1.5)
     body.Color = Color3.fromRGB(30, 30, 30)
@@ -88,7 +118,7 @@ local function createDrone()
     body.Anchored = true
     body.Name = "Body"
     
-    -- Пропеллеры (крестиком)
+    -- Винты (крестиком)
     for i = 1, 4 do
         local prop = Instance.new("Part", model)
         prop.Size = Vector3.new(0.8, 0.05, 0.1)
@@ -99,8 +129,9 @@ local function createDrone()
         prop.Name = "Prop" .. i
     end
     
-    -- Снаряд снизу
+    -- Бомба (красная сфера снизу)
     local bomb = Instance.new("Part", model)
+    bomb.Shape = Enum.PartType.Ball
     bomb.Size = Vector3.new(0.4, 0.4, 0.4)
     bomb.Color = Color3.fromRGB(255, 50, 50)
     bomb.Material = Enum.Material.Neon
@@ -115,42 +146,39 @@ end
 local function updateDronePhysics()
     if not isDroneActive or not droneModel then return end
     
-    -- Управление полетом (через CFrame)
-    local camCFrame = Camera.CFrame
-    local moveDir = camCFrame.LookVector * moveInput.Y + camCFrame.RightVector * moveInput.X
+    -- Получаем направление от джойстика
+    local moveDir = getMoveDirection()
     
     -- Скорость дрона
     local speed = 1.5 
     local newPos = droneModel.PrimaryPart.Position + (moveDir * speed)
     
-    -- Применяем позицию (плавно)
-    droneModel:PivotTo(CFrame.new(newPos, newPos + camCFrame.LookVector))
+    -- Плавное движение
+    droneModel:PivotTo(CFrame.new(newPos, newPos + Camera.CFrame.LookVector))
     
-    -- Вращение пропеллеров для визуала
+    -- Вращение пропеллеров
     local angle = tick() * 50
     droneModel.Prop1.CFrame = droneModel.Body.CFrame * CFrame.new(0.6, 0.1, 0.6) * CFrame.Angles(0, math.rad(angle), 0)
     droneModel.Prop2.CFrame = droneModel.Body.CFrame * CFrame.new(-0.6, 0.1, 0.6) * CFrame.Angles(0, math.rad(-angle), 0)
     droneModel.Prop3.CFrame = droneModel.Body.CFrame * CFrame.new(0.6, 0.1, -0.6) * CFrame.Angles(0, math.rad(-angle), 0)
     droneModel.Prop4.CFrame = droneModel.Body.CFrame * CFrame.new(-0.6, 0.1, -0.6) * CFrame.Angles(0, math.rad(angle), 0)
 
-    -- Проверка столкновения с игроками
+    -- Проверка столкновения
     for _, player in pairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
             local enemyRoot = player.Character.HumanoidRootPart
             local distance = (enemyRoot.Position - droneModel.PrimaryPart.Position).Magnitude
             if distance < 4 then
-                -- БУМ!
+                -- ВЗРЫВ
                 local explosion = Instance.new("Explosion", workspace)
                 explosion.Position = droneModel.PrimaryPart.Position
                 explosion.BlastRadius = 15
-                explosion.BlastPressure = 0 -- Отключаем стандартный урон
-                explosion.DestroyJointRadiusPercent = 0
-
-                -- Флинг врага
+                explosion.BlastPressure = 0
+                
+                -- ФЛИНГ
                 enemyRoot.AssemblyLinearVelocity = Vector3.new(0, 500, 0)
                 enemyRoot.AssemblyAngularVelocity = Vector3.new(math.random(-100, 100), 0, math.random(-100, 100))
                 
-                -- Возврат
                 endDrone()
                 break
             end
@@ -166,6 +194,7 @@ function startDrone()
     isDroneActive = true
     humanoidRoot = char.HumanoidRootPart
     savedCFrame = humanoidRoot.CFrame
+    savedCameraType = Camera.CameraType
     
     -- Скрываем персонажа
     for _, part in pairs(char:GetDescendants()) do
@@ -176,9 +205,9 @@ function startDrone()
     -- Создаем дрон
     droneModel = createDrone()
     droneModel.PrimaryPart = droneModel.Body
-    droneModel:PivotTo(savedCFrame * CFrame.new(0, 5, 0)) -- Спавн над головой
+    droneModel:PivotTo(savedCFrame * CFrame.new(0, 5, 0))
     
-    -- Камера
+    -- Камера от первого лица дрона
     Camera.CameraType = Enum.CameraType.Scriptable
     Camera.CameraSubject = droneModel.Body
     
@@ -211,7 +240,7 @@ function endDrone()
         humanoidRoot.CFrame = savedCFrame
     end
     
-    Camera.CameraType = Enum.CameraType.Custom
+    Camera.CameraType = savedCameraType
     Camera.CameraSubject = LocalPlayer.Character:FindFirstChild("Humanoid")
     
     startBtn.Text = "🚁 ЗАПУСТИТЬ ДРОН"
@@ -224,43 +253,16 @@ startBtn.MouseButton1Click:Connect(function()
 end)
 
 -- ==========================================
--- УПРАВЛЕНИЕ (Свайпы и Джойстик)
+-- ОБНОВЛЕНИЕ КАДРОВ
 -- ==========================================
--- Свайпы для камеры
-local touchInput = nil
-UserInputService.TouchStarted:Connect(function(input, gameProcessed)
-    if gameProcessed or not isDroneActive then return end
-    touchInput = input
-end)
-
-UserInputService.TouchMoved:Connect(function(input, gameProcessed)
-    if gameProcessed or not isDroneActive or not touchInput then return end
-    local delta = input.Position - touchInput.Position
-    -- Вращаем камеру (свайп)
-    Camera.CFrame = Camera.CFrame * CFrame.Angles(math.rad(-delta.Y * 0.2), math.rad(-delta.X * 0.2), 0)
-    touchInput = input
-end)
-
--- Искусственный джойстик (для движения вперед)
--- (Упрощенно: просто летим вперед, если нажата кнопка)
-local flyBtn = Instance.new("TextButton", screenGui)
-flyBtn.Size = UDim2.new(0, 80, 0, 80)
-flyBtn.Position = UDim2.new(0.8, -100, 0.8, -100)
-flyBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-flyBtn.BackgroundTransparency = 0.5
-flyBtn.Text = "ВПЕРЕД"
-flyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-flyBtn.Font = Enum.Font.GothamBold
-flyBtn.Visible = false
-Instance.new("UICorner", flyBtn).CornerRadius = UDim.new(1, 0)
-
-flyBtn.MouseButton1Down:Connect(function() if isDroneActive then moveInput = Vector2.new(0, 1) end end)
-flyBtn.MouseButton1Up:Connect(function() moveInput = Vector2.new(0, 0) end)
-
--- Показываем кнопку только в полете
 RunService.RenderStepped:Connect(function()
-    flyBtn.Visible = isDroneActive
-    if isDroneActive then updateDronePhysics() end
+    if isDroneActive then
+        -- Привязываем камеру к дрону (вид от первого лица)
+        Camera.CFrame = droneModel.Body.CFrame * CFrame.new(0, 1, 0) -- Смотрим с носа дрона
+        
+        -- Обновляем физику дрона
+        updateDronePhysics()
+    end
 end)
 
 -- Защита при смерти
